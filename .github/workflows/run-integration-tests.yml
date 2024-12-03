@@ -1,12 +1,4 @@
-# Copyright The OpenTelemetry Authors
-# SPDX-License-Identifier: Apache-2.0
 name: Integration Tests
-
-#on:
-#  workflow_run:
-#    workflows: ["Generate Images"]  # Name of the build_images workflow
-#    types:
-#      - completed
 
 on:
   push:
@@ -14,46 +6,33 @@ on:
 
 jobs:
   run_tests:
-#    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    name: "Run CI"
     steps:
-      - name: check out code
-        uses: actions/checkout@v4
+      - name: Check out code
+        uses: actions/checkout@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      - name: Build Docker images
+
+      - name: Pull Docker images
         run: |
-          docker compose build
+          docker compose -f docker compose-tests.yml pull
 
       - name: Start services using Docker Compose
         run: |
-          docker compose up -d
+          docker compose -f docker compose-tests.yml up -d
 
       - name: Wait for services to be ready
         run: |
-          # Wait until the frontend service is healthy
-          TIMEOUT=300
-          INTERVAL=5
-          ELAPSED=0
-          CONTAINER_ID=$(docker compose ps -q frontend)
-          if [ -z "$CONTAINER_ID" ]; then
-          echo "Frontend container not found."
-          exit 1
-          fi
-          while [ $ELAPSED -lt $TIMEOUT ]; do
-          STATUS=$(docker inspect -f '{{.State.Health.Status}}' $CONTAINER_ID || echo "unavailable")
-          if [ "$STATUS" == "healthy" ]; then
-          echo "Frontend service is healthy."
-          break
-          else
-          echo "Waiting for frontend service to be healthy..."
-          sleep $INTERVAL
-          ELAPSED=$((ELAPSED+INTERVAL))
-          fi
-          done
+          # Implement your service readiness checks here
+          #./scripts/wait-for-services.sh
+          #sleep 50
 
-      - name: run tracetesting
+      - name: Run trace-based tests
         run: |
-          make build && docker system prune -f && make run-tracetesting
+          make run-tracetesting
+
+      - name: Stop services
+        if: always()
+        run: |
+          docker compose -f docker compose-tests.yml down
