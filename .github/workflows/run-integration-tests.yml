@@ -37,15 +37,22 @@ jobs:
           TIMEOUT=300
           INTERVAL=5
           ELAPSED=0
-          until [ "$(docker inspect -f {{.State.Health.Status}} opentelemetry-demo-frontend-1)" == "healthy" ] || [ $ELAPSED -ge $TIMEOUT ]; do
-            sleep $INTERVAL
-            ELAPSED=$((ELAPSED+INTERVAL))
-            echo "Waiting for services to be ready..."
-          done
-          if [ $ELAPSED -ge $TIMEOUT ]; then
-            echo "Services did not become ready in time."
-            exit 1
+          CONTAINER_ID=$(docker-compose ps -q frontend)
+          if [ -z "$CONTAINER_ID" ]; then
+          echo "Frontend container not found."
+          exit 1
           fi
+          while [ $ELAPSED -lt $TIMEOUT ]; do
+          STATUS=$(docker inspect -f '{{.State.Health.Status}}' $CONTAINER_ID || echo "unavailable")
+          if [ "$STATUS" == "healthy" ]; then
+          echo "Frontend service is healthy."
+          break
+          else
+          echo "Waiting for frontend service to be healthy..."
+          sleep $INTERVAL
+          ELAPSED=$((ELAPSED+INTERVAL))
+          fi
+          done
 
       - name: run tracetesting
         run: |
