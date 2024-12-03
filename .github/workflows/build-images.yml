@@ -4,9 +4,9 @@ name: Image generation
 
 on:
   push:
-    paths:
-      - 'src/**'
-      - 'test/**'
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build_images:
