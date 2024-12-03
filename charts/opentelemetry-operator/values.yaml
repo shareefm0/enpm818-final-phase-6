@@ -38,7 +38,7 @@ pdb:
 ##
 manager:
   image:
-    repository: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator
+    repository: ghcr.io/shareefm0/opentelemetry-operator/opentelemetry-operator
     tag: ""
   collectorImage:
     repository: ""

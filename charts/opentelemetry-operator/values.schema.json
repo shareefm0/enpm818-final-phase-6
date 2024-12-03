@@ -162,7 +162,7 @@
                             "default": "",
                             "title": "The repository Schema",
                             "examples": [
-                                "ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator"
+                                "ghcr.io/shareefm0/opentelemetry-operator/opentelemetry-operator"
                             ]
                         },
                         "tag": {
@@ -175,7 +175,7 @@
                         }
                     },
                     "examples": [{
-                        "repository": "ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator",
+                        "repository": "ghcr.io/shareefm0/opentelemetry-operator/opentelemetry-operator",
                         "tag": "v0.93.0"
                     }]
                 },
@@ -1153,7 +1153,7 @@
             },
             "examples": [{
                 "image": {
-                    "repository": "ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator",
+                    "repository": "ghcr.io/shareefm0/opentelemetry-operator/opentelemetry-operator",
                     "tag": "v0.93.0"
                 },
                 "collectorImage": {
@@ -1936,7 +1936,7 @@
         },
         "manager": {
             "image": {
-                "repository": "ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator",
+                "repository": "ghcr.io/shareefm0/opentelemetry-operator/opentelemetry-operator",
                 "tag": "v0.93.0"
             },
             "collectorImage": {

@@ -816,7 +816,7 @@ opAMPBridge:
 
   # Image for OpAMP bridge
   image:
-    repository: ghcr.io/open-telemetry/opentelemetry-operator/operator-opamp-bridge
+    repository: ghcr.io/shareefm0/opentelemetry-operator/operator-opamp-bridge
     pullPolicy: IfNotPresent
     # By default, the version set for the bridge will match the version of the operator being run.
     tag: ""

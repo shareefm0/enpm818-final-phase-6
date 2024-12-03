@@ -9,7 +9,7 @@ collectors:
       otel-collector-type: daemonset-example
     targetAllocator:
       enabled: true
-      image: ghcr.io/open-telemetry/opentelemetry-operator/target-allocator:main
+      image: ghcr.io/shareefm0/opentelemetry-operator/target-allocator:main
       allocationStrategy: per-node
       prometheusCR:
         enabled: true
