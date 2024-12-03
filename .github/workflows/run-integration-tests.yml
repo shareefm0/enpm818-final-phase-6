@@ -2,21 +2,51 @@
 # SPDX-License-Identifier: Apache-2.0
 name: Integration Tests
 
+#on:
+#  workflow_run:
+#    workflows: ["Generate Images"]  # Name of the build_images workflow
+#    types:
+#      - completed
+
 on:
-  workflow_run:
-    workflows: ["Generate Images"]  # Name of the build_images workflow
-    types:
-      - completed
+  push:
+    branches: [ main ]
 
 jobs:
   run_tests:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+#    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     name: "Run CI"
-#    if: github.event.review.state == 'APPROVED'
     steps:
       - name: check out code
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Build Docker images
+        run: |
+          docker-compose build
+
+      - name: Start services using Docker Compose
+        run: |
+          docker-compose up -d
+
+      - name: Wait for services to be ready
+        run: |
+          # Wait until the frontend service is healthy
+          TIMEOUT=300
+          INTERVAL=5
+          ELAPSED=0
+          until [ "$(docker inspect -f {{.State.Health.Status}} opentelemetry-demo-frontend-1)" == "healthy" ] || [ $ELAPSED -ge $TIMEOUT ]; do
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED+INTERVAL))
+            echo "Waiting for services to be ready..."
+          done
+          if [ $ELAPSED -ge $TIMEOUT ]; then
+            echo "Services did not become ready in time."
+            exit 1
+          fi
+
       - name: run tracetesting
         run: |
           make build && docker system prune -f && make run-tracetesting
