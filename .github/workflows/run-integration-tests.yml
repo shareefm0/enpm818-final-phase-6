@@ -16,11 +16,11 @@ jobs:
 
       - name: Pull Docker images
         run: |
-          docker compose -f docker compose-tests.yml pull
+          docker compose -f compose-tests.yml pull
 
       - name: Start services using Docker Compose
         run: |
-          docker compose -f docker compose-tests.yml up -d
+          docker compose -f compose-tests.yml up -d
 
       - name: Wait for services to be ready
         run: |
@@ -35,4 +35,4 @@ jobs:
       - name: Stop services
         if: always()
         run: |
-          docker compose -f docker compose-tests.yml down
+          docker compose -f compose-tests.yml down
