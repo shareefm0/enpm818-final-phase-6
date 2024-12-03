@@ -1,6 +1,6 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
-name: Image generation
+name: Generate Images
 
 on:
   push:

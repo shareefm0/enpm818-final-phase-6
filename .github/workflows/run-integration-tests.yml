@@ -3,16 +3,17 @@
 name: Integration Tests
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_run:
+    workflows: ["Generate Images"]  # Name of the build_images workflow
+    types:
+      - completed
 
 jobs:
   run_tests:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     name: "Run CI"
-    if: github.event.review.state == 'APPROVED'
+#    if: github.event.review.state == 'APPROVED'
     steps:
       - name: check out code
         uses: actions/checkout@v4
