@@ -24,6 +24,8 @@ jobs:
       - name: Generate Kubernetes Manifest
         run: |
           make generate-kubernetes-manifests
+          ls
+          pwd
 #          helm repo add opentelemetry-collector https://open-telemetry.github.io/opentelemetry-helm-charts
 #          helm repo update
 #          helm dependency build ./charts/opentelemetry-demo
@@ -40,7 +42,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: 'opentelemetry-demo.yaml'
+          source: './kubernetes/opentelemetry-demo.yaml'
           target: '/home/ec2-user/'
 
 #      - name: Apply Manifest Using Kubectl on EC2
