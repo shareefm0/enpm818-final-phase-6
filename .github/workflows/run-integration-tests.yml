@@ -14,5 +14,5 @@ jobs:
       - name: run tracetesting
         run: |
           make build && docker system prune -f
-          sleep 5000
+          sleep 500
           make run-tracetesting
