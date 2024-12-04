@@ -1,0 +1,153 @@
+name: Deploy to EKS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-to-eks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install AWS CLI
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+
+      - name: Install kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.14.4
+
+      - name: Generate Kubernetes Manifest
+        run: |
+          helm repo add opentelemetry-collector https://open-telemetry.github.io/opentelemetry-helm-charts
+          helm repo update
+          helm dependency build ./charts/opentelemetry-demo
+
+          helm template opentelemetry-demo ./charts/opentelemetry-demo \
+            --namespace otel-demo \
+            --set image.repository=ghcr.io/shareefm0/demo \
+            --set image.tag=latest \
+            > opentelemetry-demo.yaml
+
+      - name: Apply Kubernetes Manifest
+        run: |
+          # Create namespace if it doesn't exist
+          kubectl get namespace otel-demo || kubectl create namespace otel-demo
+
+          # Backup existing deployment
+          kubectl get deployment -n otel-demo -o yaml > opentelemetry-demo-backup.yaml || true
+
+          # Apply the new manifest
+          kubectl apply -f opentelemetry-demo.yaml
+
+          # Wait for deployment to complete
+          kubectl rollout status deployment -n otel-demo --timeout=300s
+
+      - name: Monitor Deployment and Rollback if Necessary
+        run: |
+          echo "Waiting for 5 minutes to monitor the deployment..."
+          sleep 300
+
+          # Check if any pods are not in Running state
+          UNHEALTHY_PODS=$(kubectl get pods -n otel-demo --field-selector=status.phase!=Running --no-headers | wc -l)
+
+          if [ "$UNHEALTHY_PODS" -ne 0 ]; then
+            echo "Deployment has unhealthy pods. Initiating rollback..."
+
+            # Rollback to the previous deployment
+            if [ -f opentelemetry-demo-backup.yaml ]; then
+              kubectl apply -f opentelemetry-demo-backup.yaml
+
+              # Wait for rollback to complete
+              kubectl rollout status deployment -n otel-demo --timeout=300s
+
+              echo "Rollback completed."
+            else
+              echo "No backup found. Unable to rollback."
+              exit 1
+            fi
+          else
+            echo "Deployment is healthy."
+          fi
+
+
+#name: Deploy to EKS
+#
+#on:
+#  push:
+#    branches: [ main ]
+#
+#jobs:
+#  deploy:
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v3
+#
+#      - name: Configure AWS credentials
+#        uses: aws-actions/configure-aws-credentials@v2
+#        with:
+#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#          aws-region: us-east-1
+#
+#      - name: Install kubectl
+#        uses: azure/setup-kubectl@v3
+#        with:
+#          kubectl-version: 'latest'
+#
+#      - name: Install Helm
+#        uses: azure/setup-helm@v3
+#        with:
+#          version: 'latest'
+#
+#      - name: Update kubeconfig
+#        run: |
+#          aws eks update-kubeconfig --name opentelemetry-eks --region us-east-1
+#
+#      - name: Deploy with Helm
+#        run: |
+#          helm upgrade --install opentelemetry-demo ./helm-chart \
+#            --namespace otel-demo \
+#            --set image.repository=ghcr.io/shareefm0/demo \
+#            --set image.tag=1.0.0
+#
+#      - name: Wait for deployment to complete
+#        run: |
+#          kubectl rollout status deployment opentelemetry-demo-frontendproxy --namespace otel-demo --timeout=5m
+#
+#      - name: Check deployment status
+#        run: |
+#          STATUS=$(kubectl get deployment opentelemetry-demo-frontendproxy --namespace otel-demo -o jsonpath='{.status.conditions[?(@.type=="Available")].status}')
+#          if [ "$STATUS" != "True" ]; then
+#            echo "Deployment failed. Initiating rollback..."
+#            kubectl rollout undo deployment opentelemetry-demo-frontendproxy --namespace otel-demo
+#            exit 1
+#          else
+#            echo "Deployment succeeded."
+#          fi
