@@ -37,7 +37,7 @@ jobs:
           target: '/home/ec2-user/'
 
       - name: Apply Manifest Using Kubectl on EC2
-        uses: appleboy/ssh-action@v0.1.3
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
@@ -55,7 +55,7 @@ jobs:
             KUBECONFIG="/home/ec2-user/.kube/config" kubectl rollout status deployment/opentelemetry-demo-frontend -n otel-demo --timeout=30s
 
       - name: Monitor Deployment and Rollback if Necessary
-        uses: appleboy/ssh-action@v0.1.3
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
