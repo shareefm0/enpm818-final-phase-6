@@ -28,7 +28,7 @@ jobs:
           make generate-kubernetes-manifests
 
       - name: Copy Manifest to EC2 Instance
-        uses: appleboy/scp-action@v0.1.2
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
